@@ -6,4 +6,8 @@ class Merchant < ApplicationRecord
   has_many :customers, through: :invoices
 
   validates :name, presence: true
+
+  def self.get_items(merchant)
+    find_by_id(merchant.id).items if merchant
+  end
 end
