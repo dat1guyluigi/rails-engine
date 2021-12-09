@@ -2,7 +2,8 @@ require 'rails_helper'
 
 RSpec.describe 'Items API' do
   it 'sends a list of items' do
-    create_list(:item, 3)
+    merchant = create(:merchant)
+    create_list(:item, 3, merchant: merchant)
 
     get '/api/v1/items'
 
@@ -10,50 +11,32 @@ RSpec.describe 'Items API' do
 
     items = JSON.parse(response.body, symbolize_names: true)
 
-    expect(items.count).to eq(3)
-
-    items.each do |item|
-      expect(item).to have_key(:id)
-      expect(item[:id]).to be_a(Integer)
-
-      expect(item).to have_key(:name)
-      expect(item[:name]).to be_a(String)
-
-      expect(item).to have_key(:description)
-      expect(item[:description]).to be_a(String)
-
-      expect(item).to have_key(:unit_price)
-      expect(item[:unit_price]).to be_a(Float)
-    end
+    expect(items[:data].count).to eq(3)
+    expect(items[:data]).to be_a(Array)
+    expect(items[:data][0][:attributes]).to be_a(Hash)
   end
 
   it 'gets an item by its id' do
-    id = create(:item).id
+    merchant = create(:merchant)
+    id = create(:item, merchant: merchant).id.to_s
 
     get "/api/v1/items/#{id}"
 
     item = JSON.parse(response.body, symbolize_names: true)
 
     expect(response).to be_successful
-
-    expect(item).to have_key(:id)
-    expect(item[:id]).to eq(id)
-
-    expect(item).to have_key(:name)
-    expect(item[:name]).to be_a(String)
-
-    expect(item).to have_key(:description)
-    expect(item[:description]).to be_a(String)
-
-    expect(item).to have_key(:unit_price)
-    expect(item[:unit_price]).to be_a(Float)
+    expect(item).to be_a(Hash)
+    expect(item[:data]).to have_key(:id)
+    expect(item[:data][:id]).to eq(id)
   end
 
   it 'can create a new item' do
+    merchant = create(:merchant)
     item_params = {
-      name: 'Washing Machine',
-      description: 'Washes clothes',
-      unit_price: 500.0
+      "name": 'Washing Machine',
+      "description": 'Washes clothes',
+      "unit_price": 500.0,
+      "merchant_id": merchant.id
     }
 
     headers = {"CONTENT_TYPE" => "application/json"}
@@ -68,7 +51,8 @@ RSpec.describe 'Items API' do
   end
 
   it 'can update an existing item' do
-    id = create(:item).id
+    merchant = create(:merchant)
+    id = create(:item, merchant: merchant).id
     previous_name = Item.last.name
     item_params = { name: 'Dishwasher' }
     headers = {"CONTENT_TYPE" => "application/json"}
@@ -76,14 +60,14 @@ RSpec.describe 'Items API' do
     patch "/api/v1/items/#{id}", headers: headers, params: JSON.generate({item: item_params})
 
     item = Item.find_by(id: id)
-
     expect(response).to be_successful
     expect(item.name).to_not eq(previous_name)
     expect(item.name).to eq('Dishwasher')
   end
 
   it 'can delete an existing item' do
-    item = create(:item)
+    merchant = create(:merchant)
+    item = create(:item, merchant: merchant)
 
     expect(Item.count).to eq(1)
 
