@@ -8,32 +8,25 @@ RSpec.describe 'Merchants API' do
 
     expect(response).to be_successful
 
-    merchants = JSON.parse(response.body, symbolize_names: true)
+    merchants = JSON.parse(response.body, symbolize_names: true)\
 
-    expect(merchants.count).to eq(3)
-
-    merchants.each do |merchant|
-      expect(merchant).to have_key(:id)
-      expect(merchant[:id]).to be_a(Integer)
-
-      expect(merchant).to have_key(:name)
-      expect(merchant[:name]).to be_a(String)
-    end
+    expect(merchants).to be_a(Hash)
+    expect(merchants[:data].count).to eq(3)
   end
 
   it 'gets one merchant by its id' do
-    id = create(:merchant).id
+    id = create(:merchant).id.to_s
 
     get "/api/v1/merchants/#{id}"
 
     merchant = JSON.parse(response.body, symbolize_names: true)
-
+    
     expect(response).to be_successful
 
-    expect(merchant).to have_key(:id)
-    expect(merchant[:id]).to eq(id)
+    expect(merchant[:data]).to have_key(:id)
+    expect(merchant[:data][:id]).to eq(id)
 
-    expect(merchant).to have_key(:name)
-    expect(merchant[:name]).to be_a(String)
+    expect(merchant[:data][:attributes]).to have_key(:name)
+    expect(merchant[:data][:attributes][:name]).to be_a(String)
   end
 end
